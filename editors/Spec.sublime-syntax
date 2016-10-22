@@ -1,0 +1,35 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/3/syntax.html
+name: Spec
+file_extensions:
+  - spec
+scope: text.spec
+contexts:
+  main:
+    - match: '^\s*(Open|Click at|Click on|Click|Within|Select visible|Select|Remember|Property|Type|Sleep for)(\s|\n)'
+      captures:
+        1: keyword.control.spec
+
+    # Comment
+    - match: '^\s*#.*$'
+      scope: comment.line.hash.spec
+
+    # Custom command
+    - match: '^\s*!.*$'
+      # scope: support.constant
+      scope: entity.name.function.spec
+      # scope: constant.language
+
+    # Variables
+    - match: '\$[a-zA-Z0-9\.]+'
+      scope: variable.other.spec
+
+    # Strings
+    - match: '`[^`]+`'
+      scope: string.quoted.spec
+      # scope: constant.language
+
+    # Point
+    - match: '{\d+,\d+}'
+      scope: constant.language

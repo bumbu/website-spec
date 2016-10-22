@@ -5,9 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "node tests/index.js",
-    "prebuild": "npm test",
     "build": "nearleyc ./grammar/grammar.ne -o ./build/grammar.js",
-    "postbuild": "node grammar/postbuild.js"
+    "postbuild": "node grammar/postbuild.js && npm test"
   },
   "repository": {
     "type": "git",

@@ -1,0 +1,31 @@
+{
+  "name": "website-spec",
+  "version": "1.0.0",
+  "description": "A domain specific language (DSL) for functional/E2E web testing.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node tests/index.js",
+    "prebuild": "npm test",
+    "build": "nearleyc ./grammar/grammar.ne -o ./build/grammar.js",
+    "postbuild": "node grammar/postbuild.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bumbu/website-spec.git"
+  },
+  "keywords": [
+    "dsl",
+    "spec",
+    "testing"
+  ],
+  "author": "Alex Bumbu",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bumbu/website-spec/issues"
+  },
+  "homepage": "https://github.com/bumbu/website-spec#readme",
+  "devDependencies": {
+    "deep-equal": "^1.0.1",
+    "nearley": "^2.7.7"
+  }
+}

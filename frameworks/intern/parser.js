@@ -1,5 +1,6 @@
 const assert = require('assert')
 const nearley = require('nearley')
+const grammar = require('./../../build/grammar')
 const INDENTATION_STEP = 2
 const P_DEBUG = false // Parser debug
 
@@ -325,7 +326,6 @@ function processLine(line) {
   // Skip empty lines
   if (!line) return;
 
-  var grammar = require('./grammar')
   var p = new nearley.Parser(grammar.ParserRules, grammar.ParserStart)
   p.feed(line)
 

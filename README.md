@@ -6,7 +6,7 @@ A domain specific language (DSL) for functional/E2E web testing.
 
 ## Supported frameworks
 
-As the DSL is compiled into an intermediary representation, that representations has to be transformed into actual test code. 
+As the DSL is compiled into an intermediary representation, that representations has to be transformed into actual test code.
 
 You can write your own compiler for your preferate test framework, or use one of those that are bundled in:
 
@@ -26,6 +26,12 @@ p.feed('Click on button `.red`') // Pass only single-line text
 console.log(p.results) // parsed tree
 ```
 
+## Syntax highlighting in IDE
+
+Following IDEs syntax highlightings are available:
+
+* [SublimeText 3](https://github.com/bumbu/website-spec/blob/master/editors/Spec.sublime-syntax) - you'll have to install it manually into editor packages' `User` folder (`Preferences -> Browse Packages` opens the packages folder).
+
 ## Build and test
 
 * Install deps `npm install`
@@ -35,17 +41,17 @@ If you want to build or test only then check `package.json` file for those instr
 
 ## Modify the language
 
-The language tries to be fairly simple. Unsuported functionality is expected to be covered with custom instructions (see custom instructions below). 
+The language tries to be fairly simple. Unsuported functionality is expected to be covered with custom instructions (see custom instructions below).
 
 Grammar is written, generated and parsed using [nearley](https://github.com/Hardmath123/nearley).
 
 ## Syntax
 
-The DSL supports one instruction per line. 
-Grammar parser expects non-indented lines. So indentation has to be handled in each framework compiler separately. 
-Grammar parser generates a simple flat syntax tree. 
+The DSL supports one instruction per line.
+Grammar parser expects non-indented lines. So indentation has to be handled in each framework compiler separately.
+Grammar parser generates a simple flat syntax tree.
 
-Check [grammar tests](https://github.com/bumbu/website-spec/blob/master/tests/grammar.test.js) for examples of supported commands and generated trees. 
+Check [grammar tests](https://github.com/bumbu/website-spec/blob/master/tests/grammar.test.js) for examples of supported commands and generated trees.
 
 ### Open
 
@@ -55,9 +61,9 @@ Intended to open a page
 Open $url
 Open `http://bumbu.me
 ```
-### Click 
+### Click
 
-Intended to make a click 
+Intended to make a click
 
 ```
 Click
@@ -128,7 +134,7 @@ Sleep for 5 seconds
 
 ### Custom instructions
 
-As the DSL doesn't try to cover all available and possible features (nor it could do that) - it allows for custom instructions. 
+As the DSL doesn't try to cover all available and possible features (nor it could do that) - it allows for custom instructions.
 Custom instructions are basically unique phrases that should be backed up by some test code (similar to how [Cucumber testing](https://github.com/cucumber/cucumber-js/blob/master/docs/nodejs_example.md) works.
 
 ```

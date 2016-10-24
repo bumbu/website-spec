@@ -1,6 +1,6 @@
 {
   "name": "website-spec",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A domain specific language (DSL) for functional/E2E web testing.",
   "main": "index.js",
   "scripts": {

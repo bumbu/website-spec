@@ -6,7 +6,7 @@ Examples in this repo use [BDD interface](https://theintern.github.io/intern/#in
 ## Usage
 
 ```js
-// Get the compiler
+// Get the DSL compiler
 var dsl = require('website-spec').frameworks.intern
 // Get the raw contents of a file
 var rawSpec = require('intern/dojo/text!tests/some_spec_file.spec')
@@ -16,7 +16,7 @@ var rawSpec2 = require('intern/dojo/text!tests/some_spec_file_2.spec')
 
 bdd.describe('Suite name', function () {
   bdd.it('Test name', function() {
-    return dsl.compile(rawSpec, this)
+    return dsl.compile({remote: this.remote, spec: rawSpec})
   })
 
   bdd.it('Other test name', function() {
@@ -36,7 +36,12 @@ bdd.describe('Suite name', function () {
       }
     }
 
-    return dsl.compile(rawSpec2, this, variables, customInstructions)
+    return dsl.compile({
+      remote: this.remote,
+      spec: rawSpec2,
+      variables: variables,
+      customInstructions: customInstructions,
+    });
   })
 }
 ```

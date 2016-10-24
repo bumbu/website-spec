@@ -1,35 +1,40 @@
 const assert = require('assert')
 const nearley = require('nearley')
 const grammar = require('./../../build/grammar')
-const INDENTATION_STEP = 2
-const P_DEBUG = false // Parser debug
 
-module.exports = compile
+module.exports = {compile}
+
+const defaults = {
+  remote: null,
+  spec: '',
+  variables: {},
+  customInstructions: {},
+  debug: false,
+  indentationStep: 2,
+}
 
 /**
- * Compiles the DSL into test commands
- * @param  {Sting} fileContents         spec file contents
- * @param  {Object} self                `this` from the test
- * @param  {Object} variables           available variables
- * @param  {Object} customInstructions  An object of custom instructions
+ * Compiles the DSL into test instructions
+ * @param  {{remote, spec}} clientOptions
  * @return {Promise}
  */
-function compile(fileContents, self, variables, customInstructions) {
-  variables = variables || {}
-  customInstructions = customInstructions || {}
-  var lines = fileContents.split("\n");
-  var promise;
-  var currentIndentation = 0;
-  var lineData;
-  var lineNumber = 0;
+function compile(clientOptions) {
+  if (!clientOptions.hasOwnProperty('remote')) throw new Error('Options should contain `remote`');
+  if (!clientOptions.hasOwnProperty('spec')) throw new Error('Options should contain `spec`');
+
+  const opts = Object.assign({}, defaults, clientOptions);
+  const lines = opts.spec.split("\n");
+  let currentIndentation = 0;
+  let lineNumber = 0;
 
   // Setup
-  promise = self.remote
+  let promise = opts.remote
     .setFindTimeout(3000)
 
   for (var line of lines) {
     lineNumber++;
-    lineData = processLine(line);
+    let lineData = processLine(line);
+
     if (lineData) {
       var {data, indentation} = lineData;
 
@@ -41,77 +46,77 @@ function compile(fileContents, self, variables, customInstructions) {
       // Check for indentation decrease
       while (indentation < currentIndentation) {
         promise = promise.end()
-        if (P_DEBUG) console.log(`${spaces(currentIndentation)}.end()`)
-        currentIndentation -= INDENTATION_STEP
+        if (opts.debug) console.log(`${spaces(currentIndentation)}.end()`)
+        currentIndentation -= opts.indentationStep
       }
 
       switch (data[0]) {
         case 'Open':
-          promise = promise.get(getValue(data[1], variables))
-          if (P_DEBUG) console.log(`${spaces(currentIndentation)}.get(${getValue(data[1], variables)})`)
+          promise = promise.get(getValue(data[1], opts.variables))
+          if (opts.debug) console.log(`${spaces(currentIndentation)}.get(${getValue(data[1], opts.variables)})`)
           break;
 
         case 'Click':
           promise = promise.click()
-          if (P_DEBUG) console.log(`${spaces(currentIndentation)}.click()`)
+          if (opts.debug) console.log(`${spaces(currentIndentation)}.click()`)
           break;
 
         case 'Click on':
-          promise = promise.findDisplayedByCssSelector(getSelector(data[1], variables))
-          if (P_DEBUG) console.log(`${spaces(currentIndentation)}.findDisplayedByCssSelector(${getSelector(data[1], variables)})`)
+          promise = promise.findDisplayedByCssSelector(getSelector(data[1], opts.variables))
+          if (opts.debug) console.log(`${spaces(currentIndentation)}.findDisplayedByCssSelector(${getSelector(data[1], opts.variables)})`)
           promise = promise.click()
-          if (P_DEBUG) console.log(`${spaces(currentIndentation + INDENTATION_STEP)}.click()`)
+          if (opts.debug) console.log(`${spaces(currentIndentation + opts.indentationStep)}.click()`)
           break;
 
         case 'Click at':
           promise = promise.moveMouseTo(data[1].value.x, data[1].value.y)
-          if (P_DEBUG) console.log(`${spaces(currentIndentation)}.moveMouseTo(${data[1].value.x}, ${data[1].value.y})`)
+          if (opts.debug) console.log(`${spaces(currentIndentation)}.moveMouseTo(${data[1].value.x}, ${data[1].value.y})`)
           promise = promise.clickMouseButton(0)
-          if (P_DEBUG) console.log(`${spaces(currentIndentation)}.clickMouseButton(0)`)
+          if (opts.debug) console.log(`${spaces(currentIndentation)}.clickMouseButton(0)`)
           promise = promise.releaseMouseButton(0)
-          if (P_DEBUG) console.log(`${spaces(currentIndentation)}.releaseMouseButton(0)`)
+          if (opts.debug) console.log(`${spaces(currentIndentation)}.releaseMouseButton(0)`)
           break;
 
         case 'Select':
         case 'Select visible':
           var fn = data[0] == 'Select' ? 'findByCssSelector' : 'findDisplayedByCssSelector';
-          promise = promise[fn](getSelector(data[1], variables))
-          if (P_DEBUG) console.log(`${spaces(currentIndentation)}.${fn}(${getSelector(data[1], variables)})`)
+          promise = promise[fn](getSelector(data[1], opts.variables))
+          if (opts.debug) console.log(`${spaces(currentIndentation)}.${fn}(${getSelector(data[1], opts.variables)})`)
           break;
 
         case 'Sleep':
           promise = promise.sleep(data[1].value * 1000)
-          if (P_DEBUG) console.log(`${spaces(currentIndentation)}.sleep(${data[1].value * 1000})`)
+          if (opts.debug) console.log(`${spaces(currentIndentation)}.sleep(${data[1].value * 1000})`)
           break;
 
         case 'Type':
-          var value = getValue(data[1], variables)
+          var value = getValue(data[1], opts.variables)
           promise = promise.type(value)
-          if (P_DEBUG) console.log(`${spaces(currentIndentation)}.type(${value})`)
+          if (opts.debug) console.log(`${spaces(currentIndentation)}.type(${value})`)
           break;
 
         case 'Property':
-          promise = injectPropertyIntoChain(data[1], promise)
-          promise = compareWithChainValue(data[2], data[3], variables, promise)
+          promise = injectPropertyIntoChain(data[1], promise, opts)
+          promise = compareWithChainValue(data[2], data[3], promise, opts)
           break;
 
         case 'Remember':
-          promise = injectPropertyIntoChain(data[1], promise)
-          promise = saveChainValue(data[2], variables, promise)
+          promise = injectPropertyIntoChain(data[1], promise, opts)
+          promise = saveChainValue(data[2], promise, opts)
           break;
 
         case 'Custom':
-          if (!customInstructions.hasOwnProperty(data[1])) {
+          if (!opts.customInstructions.hasOwnProperty(data[1])) {
             throw new Error(`No custom instruction found: ${data[1]}`)
           }
 
-          promise = customInstructions[data[1]](promise, variables)
+          promise = opts.customInstructions[data[1]](promise, opts.variables)
       }
 
       // If current command expects an indent, increase current indentation
       // If next command will be at the same indent, it will add an .end() to close previous selector
       if (commandCanIndent(data[0])) {
-        currentIndentation = indentation + INDENTATION_STEP
+        currentIndentation = indentation + opts.indentationStep
       } else {
         currentIndentation = indentation
       }
@@ -232,19 +237,20 @@ function getElementType(type) {
  * promises chain
  * @param  {{type, value}} property Property Object
  * @param  {Promise} promise
+ * @param  {Object} opts
  * @return {Promise}
  */
-function injectPropertyIntoChain(property, promise) {
+function injectPropertyIntoChain(property, promise, opts) {
   if (property.type !== 'property') {
     throw new Error('Bad property')
   }
 
   if (property.value === 'text' || property.value == 'value') {
     promise = promise.getVisibleText()
-    if (P_DEBUG) console.log(`.getVisibleText()`)
+    if (opts.debug) console.log(`.getVisibleText()`)
   } else {
     promise = promise.getAttribute(property.value)
-    if (P_DEBUG) console.log(`.getAttribute(${property.value})`)
+    if (opts.debug) console.log(`.getAttribute(${property.value})`)
   }
 
   return promise;
@@ -253,19 +259,19 @@ function injectPropertyIntoChain(property, promise) {
 /**
  * Saves the promise chain value into a variable
  * @param  {{type, value}} obj
- * @param  {Object} variables   Current variables
  * @param  {Promise} promise
+ * @param  {{debug, variables}} opts   Options
  * @return {Promise}
  */
-function saveChainValue(obj, variables, promise) {
+function saveChainValue(obj, promise, opts) {
   if (obj.type !== 'variable') {
     throw new Error('Can\'t update a non variable')
   }
 
   promise = promise.then(function(value) {
-    setVariable(obj.value, value, variables)
+    setVariable(obj.value, value, opts.variables)
   })
-  if (P_DEBUG) console.log(`.then(... set $${obj.value} value from chain)`)
+  if (opts.debug) console.log(`.then(... set $${obj.value} value from chain)`)
 
   return promise
 }
@@ -274,17 +280,17 @@ function saveChainValue(obj, variables, promise) {
  * Compares a value with chain value
  * @param  {{type: "condition", value}} condition
  * @param  {{type, value}} obj                      Value object
- * @param  {Object} variables                       Current variables
  * @param  {Promise} promise
+ * @param  {{debug, variables}} opts                Options
  * @return {Promise}
  */
-function compareWithChainValue(condition, obj, variables, promise) {
+function compareWithChainValue(condition, obj, promise, opts) {
   if (condition.type !== 'condition') {
     throw new Error('Comparison should be done with a valid condition')
   }
 
   promise = promise.then(function(value) {
-    var expectedValue = getValue(obj, variables)
+    var expectedValue = getValue(obj, opts.variables)
 
     if (condition.value === 'equal') {
       assert.equal(value, expectedValue)
@@ -294,7 +300,7 @@ function compareWithChainValue(condition, obj, variables, promise) {
       throw new Error(`Comparison ${condition.value} is not supported`)
     }
   })
-  if (P_DEBUG) console.log(`.then(... expectation)`)
+  if (opts.debug) console.log(`.then(... expectation)`)
 
   return promise;
 }

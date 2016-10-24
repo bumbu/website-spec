@@ -11,10 +11,10 @@ define(function (require) {
   bdd.describe('Event creation', function () {
     // A simple test
     bdd.it('Test for event', function() {
-      return dsl.compile(specAdminCreate, this);
+      return dsl.compile({remote: this.remote, spec: specAdminEventCheck});
     })
 
-    // A test that uses some passed variables and custom test instructions
+    // A test that uses some variables and custom test instructions
     bdd.it('Should create an event', function() {
       var self = this;
 
@@ -47,7 +47,12 @@ define(function (require) {
         },
       }
 
-      return dsl.compile(specAdminCreate, this, testVariables, customInstructions);
+      return dsl.compile({
+        remote: this.remote,
+        spec: specAdminCreate,
+        variables: testVariables,
+        customInstructions: customInstructions,
+      });
     })
 
   });
